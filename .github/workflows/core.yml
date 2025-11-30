@@ -151,23 +151,3 @@ jobs:
       ./target/${{ matrix.TARGET }}/release/easytier-core*
       ./target/${{ matrix.TARGET }}/release/easytier-web*
       ./target/${{ matrix.TARGET }}/release/easytier-web-embed*
-
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: ./release-artifacts
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: ./release-artifacts/**
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

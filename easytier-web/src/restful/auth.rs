@@ -123,16 +123,11 @@ mod post {
         }
 
         if let Err(_e) = auth_session.backend.register_new_user(&req).await {
-            tracing::error!("注册失败，本站已关闭注册");
-            return Err((
-                StatusCode::BAD_REQUEST,
-                axum::Json(other_error("禁止注册")),
-            ));
-        }
-
-        Ok(Void::default().into())
-    }
+    tracing::error!("注册失败，本站已关闭注册");
+    return Err((StatusCode::BAD_REQUEST, axum::Json(other_error("禁止注册"))));
 }
+
+Ok(Void::default().into())
 
 mod get {
     use crate::restful::{
@@ -174,15 +169,11 @@ mod get {
     }
 
     pub async fn check_login_status(
-        auth_session: AuthSession,
-    ) -> Result<Json<Void>, HttpHandleError> {
-        if auth_session.user.is_some() {
-            Ok(Json(Void::default()))
-        } else {
-            Err((
-                StatusCode::UNAUTHORIZED,
-                Json::from(other_error("未登录")),
-            ))
-        }
+    auth_session: AuthSession,
+) -> Result<Json<Void>, HttpHandleError> {
+    if auth_session.user.is_some() {
+        Ok(Json(Void::default()))
+    } else {
+        Err((StatusCode::UNAUTHORIZED, Json::from(other_error("未登录"))))
     }
 }
