@@ -122,7 +122,7 @@ mod post {
             ));
         }
 
-        if let Err(e) = auth_session.backend.register_new_user(&req).await {
+        if let Err(_e) = auth_session.backend.register_new_user(&req).await {
             tracing::error!("注册失败，本站已关闭注册");
             return Err((
                 StatusCode::BAD_REQUEST,
