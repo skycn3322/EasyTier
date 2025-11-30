@@ -122,7 +122,7 @@ mod post {
             ));
         }
 
-        if let Err(e) = auth_session.backend.register_new_user(&req).await {
+        if let Err(_e) = auth_session.backend.register_new_user(&req).await {
             tracing::error!("Failed to register new user: {:?}", e);
             return Err((
                 StatusCode::BAD_REQUEST,
