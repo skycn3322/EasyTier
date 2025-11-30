@@ -126,7 +126,7 @@ mod post {
             tracing::error!("注册失败，本站已关闭注册");
             return Err((
                 StatusCode::BAD_REQUEST,
-                other_error("禁止注册"),
+                axum::Json(other_error("禁止注册")),
             ));
         }
 

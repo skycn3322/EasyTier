@@ -9,7 +9,6 @@
 [![GitHub Test Actions](https://github.com/EasyTier/EasyTier/actions/workflows/test.yml/badge.svg)](https://github.com/EasyTier/EasyTier/actions/workflows/test.yml)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/EasyTier/EasyTier)
 
-[简体中文](/README_CN.md) | [English](/README.md)
 
 > ✨ 一个由 Rust 和 Tokio 驱动的简单、安全、去中心化的异地组网方案
 
@@ -18,7 +17,7 @@
 <img src="assets/running-page.png" width="300" alt="运行页面">
 </p>
 
-📚 **[完整文档](https://easytier.cn)** | 🖥️ **[Web 控制台](https://easytier.cn/web)** | 📝 **[下载发布版本](https://github.com/EasyTier/EasyTier/releases)** | 🧩 **[第三方工具](https://easytier.cn/guide/installation_gui.html#%E7%AC%AC%E4%B8%89%E6%96%B9%E5%9B%BE%E5%BD%A2%E7%95%8C%E9%9D%A2)** | ❤️ **[赞助](#赞助)**
+📚 **[完整文档](https://easytier.cn)** | 🖥️ **[Web 控制台](https://easytier.cn/web)** | 📝 **[下载发布版本](https://github.com/skycn3322/EasyTier/releases)** | 🧩 **[第三方工具](https://easytier.cn/guide/installation_gui.html#%E7%AC%AC%E4%B8%89%E6%96%B9%E5%9B%BE%E5%BD%A2%E7%95%8C%E9%9D%A2)** | ❤️ **[赞助](#赞助)**
 
 ## 特性
 
@@ -282,42 +281,6 @@ sudo easytier-core --network-name mysharednode --network-secret mysharednode
 - [ZeroTier](https://www.zerotier.com/)：用于连接设备的全球虚拟网络。
 - [TailScale](https://tailscale.com/)：旨在简化网络配置的 VPN 解决方案。
 
-### 联系我们
-
-- 💬 **[Telegram 群组](https://t.me/easytier)**
-- 👥 **QQ 群**
-  - 一群 [949700262](https://qm.qq.com/q/wFoTUChqZW)
-  - 二群 [837676408](https://qm.qq.com/q/4V33DrfgHe)
-  - 三群 [957189589](https://qm.qq.com/q/YNyTQjwlai)
-
 ## 许可证
 
 EasyTier 在 [LGPL-3.0](https://github.com/EasyTier/EasyTier/blob/main/LICENSE) 许可下发布。
-
-## 赞助
-
-本项目的 CDN 加速和安全防护由腾讯云 EdgeOne 赞助。
-
-<p align="center">
-<a href="https://edgeone.ai/?from=github" target="_blank">
-<img src="assets/edgeone.png" width="200">
-</a>
-</p>
-
-特别感谢 [浪浪云](https://langlangy.cn/?i26c5a5) 和 [雨云](https://www.rainyun.com/NjM0NzQ1_) 赞助我们的公共服务器。
-
-<p align="center">
-<a href="https://langlangy.cn/?i26c5a5" target="_blank">
-<img src="assets/langlang.png" width="200">
-</a>
-<a href="https://langlangy.cn/?i26c5a5" target="_blank">
-<img src="assets/raincloud.png" width="200">
-</a>
-</p>
-
-如果您觉得 EasyTier 有帮助，请考虑赞助我们。软件开发和维护需要大量的时间和精力，您的赞助将帮助我们更好地维护和改进 EasyTier。
-
-<p align="center">
-<img src="assets/wechat.png" width="200">
-<img src="assets/alipay.png" width="200">
-</p>
