@@ -146,7 +146,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: easytier-${{ matrix.ARTIFACT_NAME }}
-          path: ./target/${{ matrix.TARGET }}/release/*
+    path: |
+      ./target/${{ matrix.TARGET }}/release/easytier-cli*
+      ./target/${{ matrix.TARGET }}/release/easytier-core*
+      ./target/${{ matrix.TARGET }}/release/easytier-web*
+      ./target/${{ matrix.TARGET }}/release/easytier-web-embed*
 
   release:
     needs: build
