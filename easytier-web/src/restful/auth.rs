@@ -53,10 +53,10 @@ mod put {
             .change_password(auth_session.user.as_ref().unwrap().id(), &req)
             .await
         {
-            tracing::error!("修改密码失败: {:?}", e);
+            tracing::error!("Failed to change password: {:?}", e);
             return Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json::from(other_error(format!("修改密码失败: {:?}", e))),
+                Json::from(other_error(format!("{:?}", e))),
             ));
         }
 
@@ -88,13 +88,13 @@ mod post {
             Ok(None) => {
                 return Err((
                     StatusCode::UNAUTHORIZED,
-                    Json::from(other_error("用户名或密码错误")),
+                    Json::from(other_error("Invalid credentials")),
                 ));
             }
             Err(e) => {
                 return Err((
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    Json::from(other_error(format!("服务器内部错误: {:?}", e))),
+                    Json::from(other_error(format!("{:?}", e))),
                 ))
             }
         };
@@ -102,7 +102,7 @@ mod post {
         if let Err(e) = auth_session.login(&user).await {
             return Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json::from(other_error(format!("登录失败: {:?}", e))),
+                Json::from(other_error(format!("{:?}", e))),
             ));
         }
 
@@ -118,16 +118,21 @@ mod post {
         if !CaptchaUtil::ver(&req.captcha, &captcha_session).await {
             return Err((
                 StatusCode::BAD_REQUEST,
-                other_error(format!("验证码错误，输入值: {}", req.captcha)).into(),
+                other_error(format!("captcha verify error, input: {}", req.captcha)).into(),
             ));
         }
 
-        if let Err(_e) = auth_session.backend.register_new_user(&req).await {
-    tracing::error!("注册失败，本站已关闭注册");
-    return Err((StatusCode::BAD_REQUEST, axum::Json(other_error("禁止注册"))));
-}
+        if let Err(e) = auth_session.backend.register_new_user(&req).await {
+            tracing::error!("Failed to register new user: {:?}", e);
+            return Err((
+                StatusCode::BAD_REQUEST,
+                other_error(format!("{:?}", e)).into(),
+            ));
+        }
 
-Ok(Void::default().into())
+        Ok(Void::default().into())
+    }
+}
 
 mod get {
     use crate::restful::{
@@ -148,10 +153,10 @@ mod get {
         match auth_session.logout().await {
             Ok(_) => Ok(Json(Void::default())),
             Err(e) => {
-                tracing::error!("退出登录失败: {:?}", e);
+                tracing::error!("Failed to logout: {:?}", e);
                 Err((
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    Json::from(other_error(format!("退出登录失败: {:?}", e))),
+                    Json::from(other_error(format!("{:?}", e))),
                 ))
             }
         }
@@ -163,17 +168,21 @@ mod get {
             Ok(response) => Ok(response),
             Err(e) => Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json::from(other_error(format!("生成验证码失败: {:?}", e))),
+                Json::from(other_error(format!("{:?}", e))),
             )),
         }
     }
 
     pub async fn check_login_status(
-    auth_session: AuthSession,
-) -> Result<Json<Void>, HttpHandleError> {
-    if auth_session.user.is_some() {
-        Ok(Json(Void::default()))
-    } else {
-        Err((StatusCode::UNAUTHORIZED, Json::from(other_error("未登录"))))
+        auth_session: AuthSession,
+    ) -> Result<Json<Void>, HttpHandleError> {
+        if auth_session.user.is_some() {
+            Ok(Json(Void::default()))
+        } else {
+            Err((
+                StatusCode::UNAUTHORIZED,
+                Json::from(other_error("Not logged in")),
+            ))
+        }
     }
 }
