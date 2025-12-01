@@ -39,6 +39,7 @@ jobs:
           paths: '["Cargo.toml", "Cargo.lock", "easytier/**", ".github/workflows/core.yml", ".github/workflows/install_rust.sh"]'
   
   build_web:
+    # ... (build_web 内容保持不变) ...
     runs-on: ubuntu-latest
     needs: pre_job
     if: needs.pre_job.outputs.should_skip != 'true'
@@ -306,8 +307,8 @@ jobs:
     if: (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') && needs.build.result == 'success'
     env:
       RELEASE_MODE: ${{ github.event.inputs.release_type || 'nightly' }}
-      # 修复 L299 错误：使用 formatDateTime(null, format) 获取当前时间
-      RELEASE_NAME: ${{ github.event.inputs.release_type == 'release' && format('v{0}', github.run_id) || format('{0}-{1}', github.event.inputs.release_type || 'nightly', formatDateTime(null, 'yyyyMMdd.HHmm')) }}
+      # 新的 RELEASE_NAME 定义：如果输入是 release，使用 run_id 作为版本号；否则使用 nightly-runid
+      RELEASE_NAME: ${{ github.event.inputs.release_type == 'release' && format('v{0}', github.run_id) || format('nightly-{0}', github.run_id) }}
 
     steps:
       # 1. 下载所有构建的 Artifacts
