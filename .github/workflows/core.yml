@@ -5,19 +5,17 @@ on:
   workflow_dispatch:
     inputs:
       release_type:
-        description: 'Release Type (e.g., nightly, manual)'
+        description: 'Select the type of release to build and publish.' # 修复 L18 错误
         required: true
-        default: 'manual'
+        default: 'nightly'
         type: choice
         options:
-          - manual
           - nightly
-          - release
+          - release # 仅当您想发布正式版本时使用此选项
   
-  # --- 定时触发（例如：每天凌晨）---
-  schedule:
-    # cron: "0 0 * * *" # 每天 UTC 时间 00:00 执行 (可选，如果不需要定时请注释掉)
-    # 为了演示，我们先注释掉定时器，重点关注手动触发
+  # --- 定时触发 (如果需要，请取消注释) ---
+  # schedule:
+  #   - cron: "0 0 * * *" 
 
 env:
   CARGO_TERM_COLOR: always
@@ -28,7 +26,6 @@ defaults:
 
 jobs:
   pre_job:
-    # ... (pre_job 内容保持不变，用于去重检查) ...
     runs-on: ubuntu-latest
     outputs:
       should_skip: ${{ steps.skip_check.outputs.should_skip == 'true' && !startsWith(github.ref_name, 'releases/') }}
@@ -40,14 +37,12 @@ jobs:
           skip_after_successful_duplicate: 'true'
           cancel_others: 'true'
           paths: '["Cargo.toml", "Cargo.lock", "easytier/**", ".github/workflows/core.yml", ".github/workflows/install_rust.sh"]'
-
+  
   build_web:
-    # ... (build_web 内容保持不变) ...
     runs-on: ubuntu-latest
     needs: pre_job
     if: needs.pre_job.outputs.should_skip != 'true'
     steps:
-      # ... (所有 Node/pnpm/Build 步骤不变) ...
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v4
         with:
@@ -78,22 +73,39 @@ jobs:
           name: easytier-web-dashboard
           path: |
             easytier-web/frontend/dist/*
-
+            
   build:
-    # ... (build 矩阵编译作业内容保持不变) ...
     strategy:
       fail-fast: false
       matrix:
         include:
-          # ... (所有目标平台定义不变) ...
           - TARGET: aarch64-unknown-linux-musl
             OS: ubuntu-22.04
             ARTIFACT_NAME: linux-aarch64
-          # ... (其他平台定义) ...
-          - TARGET: x86_64-unknown-freebsd
+          - TARGET: x86_64-unknown-linux-musl
             OS: ubuntu-22.04
-            ARTIFACT_NAME: freebsd-13.2-x86_64
-            BSD_VERSION: 13.2
+            ARTIFACT_NAME: linux-x86_64
+          - TARGET: riscv64gc-unknown-linux-musl
+            OS: ubuntu-22.04
+            ARTIFACT_NAME: linux-riscv64
+          - TARGET: mips-unknown-linux-musl
+            OS: ubuntu-22.04
+            ARTIFACT_NAME: linux-mips
+          - TARGET: mipsel-unknown-linux-musl
+            OS: ubuntu-22.04
+            ARTIFACT_NAME: linux-mipsel
+          - TARGET: armv7-unknown-linux-musleabihf
+            OS: ubuntu-22.04
+            ARTIFACT_NAME: linux-armv7hf
+          - TARGET: armv7-unknown-linux-musleabi
+            OS: ubuntu-22.04
+            ARTIFACT_NAME: linux-armv7
+          - TARGET: arm-unknown-linux-musleabihf
+            OS: ubuntu-22.04
+            ARTIFACT_NAME: linux-armhf
+          - TARGET: arm-unknown-linux-musleabi
+            OS: ubuntu-22.04
+            ARTIFACT_NAME: linux-arm
           - TARGET: loongarch64-unknown-linux-musl
             OS: ubuntu-24.04
             ARTIFACT_NAME: linux-loongarch64
@@ -112,6 +124,10 @@ jobs:
           - TARGET: i686-pc-windows-msvc
             OS: windows-latest
             ARTIFACT_NAME: windows-i686
+          - TARGET: x86_64-unknown-freebsd
+            OS: ubuntu-22.04
+            ARTIFACT_NAME: freebsd-13.2-x86_64
+            BSD_VERSION: 13.2
 
     runs-on: ${{ matrix.OS }}
     env:
@@ -124,7 +140,6 @@ jobs:
       - build_web
     if: needs.pre_job.outputs.should_skip != 'true'
     steps:
-      # ... (所有下载、编译、压缩步骤保持不变) ...
       - uses: actions/checkout@v3
       - name: Set current ref as env variable
         run: |
@@ -240,7 +255,7 @@ jobs:
             ./artifacts/*
 
   core-result:
-    # 确保我们检查构建状态，但不对 Release 发布造成阻碍（因为 Release 是手动触发的）
+    # 检查构建是否全部成功
     if: always()
     runs-on: ubuntu-latest
     needs:
@@ -253,7 +268,6 @@ jobs:
         run: exit 1
 
   magisk_build:
-    # ... (magisk_build 内容保持不变) ...
     needs: 
       - pre_job
       - build_web
@@ -284,32 +298,19 @@ jobs:
             !./easytier-contrib/easytier-magisk/magisk_update.json
           if-no-files-found: error
           
-  # === 新增的 Release 作业 ===
   create_release:
     runs-on: ubuntu-latest
     needs: 
       - build
-      - magisk_build # 确保所有产物都已生成
-    # 仅在通过 workflow_dispatch 或 schedule 触发时运行，并且构建成功
+      - magisk_build
+    # 仅在 workflow_dispatch 或 schedule 触发，并且所有构建作业成功时运行
     if: (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') && needs.build.result == 'success'
     env:
-      # 如果是手动触发，使用输入值；如果是定时触发，使用 nightly
       RELEASE_MODE: ${{ github.event.inputs.release_type || 'nightly' }}
-      # 生成 Release 名称
-      RELEASE_NAME: ${{ github.event.inputs.release_type == 'release' && format('v{0}', steps.version_check.outputs.version) || format('{0}-{1}', env.RELEASE_MODE, formatDateTime(utcNow(), 'yyyyMMdd.HHmm')) }}
-      
-    steps:
-      - name: Determine Version for Release Name (Optional - You might need to adapt this if versioning logic is complex)
-        id: version_check
-        run: |
-          # 示例：如果确定要发布 release，可以从 Cargo.toml 读取版本号
-          if [[ "${{ env.RELEASE_MODE }}" == "release" ]]; then
-            VERSION=$(grep '^version =' Cargo.toml | awk '{print $3}' | tr -d '"')
-            echo "version=$VERSION" >> $GITHUB_OUTPUT
-          else
-            echo "version=N/A" >> $GITHUB_OUTPUT
-          fi
+      # 使用 formatDateTime 生成 Release 名称，避免依赖未执行的 steps
+      RELEASE_NAME: ${{ github.event.inputs.release_type == 'release' && format('v{0}', github.run_id) || format('{0}-{1}', github.event.inputs.release_type || 'nightly', formatDateTime(utcNow(), 'yyyyMMdd.HHmm')) }}
 
+    steps:
       # 1. 下载所有构建的 Artifacts
       - name: Download All Artifacts
         uses: actions/download-artifact@v4
@@ -320,8 +321,6 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          # 必须使用一个 token 具有 'write:packages' 或 'contents: write' 权限
-          # 默认的 GITHUB_TOKEN 足够
           tag_name: easytier-${{ env.RELEASE_NAME }}
           name: EasyTier ${{ env.RELEASE_NAME }}
           body: |
@@ -329,8 +328,8 @@ jobs:
             Mode: ${{ env.RELEASE_MODE }}
             
             All supported platform binaries and the Magisk module are attached below.
-          draft: false # 可以设置为 true 进行草稿
-          prerelease: ${{ env.RELEASE_MODE != 'release' }} # 如果不是正式release，则设为预发布
+          draft: ${{ env.RELEASE_MODE != 'release' }} # 如果不是 release 模式，设为草稿
+          prerelease: ${{ env.RELEASE_MODE == 'nightly' }} # 只有 nightly 设为预发布
           
           # 附加所有下载的 Artifacts 文件
           files: |
