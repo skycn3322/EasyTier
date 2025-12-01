@@ -5,13 +5,13 @@ on:
   workflow_dispatch:
     inputs:
       release_type:
-        description: 'Select the type of release to build and publish.' # 修复 L18 错误
+        description: 'Select the type of release to build and publish.'
         required: true
         default: 'nightly'
         type: choice
         options:
           - nightly
-          - release # 仅当您想发布正式版本时使用此选项
+          - release
   
   # --- 定时触发 (如果需要，请取消注释) ---
   # schedule:
@@ -255,7 +255,6 @@ jobs:
             ./artifacts/*
 
   core-result:
-    # 检查构建是否全部成功
     if: always()
     runs-on: ubuntu-latest
     needs:
@@ -303,12 +302,12 @@ jobs:
     needs: 
       - build
       - magisk_build
-    # 仅在 workflow_dispatch 或 schedule 触发，并且所有构建作业成功时运行
+    # 仅在 workflow_dispatch 或 schedule 触发，并且构建成功时运行
     if: (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') && needs.build.result == 'success'
     env:
       RELEASE_MODE: ${{ github.event.inputs.release_type || 'nightly' }}
-      # 使用 formatDateTime 生成 Release 名称，避免依赖未执行的 steps
-      RELEASE_NAME: ${{ github.event.inputs.release_type == 'release' && format('v{0}', github.run_id) || format('{0}-{1}', github.event.inputs.release_type || 'nightly', formatDateTime(utcNow(), 'yyyyMMdd.HHmm')) }}
+      # 修复 L299 错误：使用 formatDateTime(null, format) 获取当前时间
+      RELEASE_NAME: ${{ github.event.inputs.release_type == 'release' && format('v{0}', github.run_id) || format('{0}-{1}', github.event.inputs.release_type || 'nightly', formatDateTime(null, 'yyyyMMdd.HHmm')) }}
 
     steps:
       # 1. 下载所有构建的 Artifacts
@@ -328,8 +327,8 @@ jobs:
             Mode: ${{ env.RELEASE_MODE }}
             
             All supported platform binaries and the Magisk module are attached below.
-          draft: ${{ env.RELEASE_MODE != 'release' }} # 如果不是 release 模式，设为草稿
-          prerelease: ${{ env.RELEASE_MODE == 'nightly' }} # 只有 nightly 设为预发布
+          draft: ${{ env.RELEASE_MODE != 'release' }}
+          prerelease: ${{ env.RELEASE_MODE == 'nightly' }}
           
           # 附加所有下载的 Artifacts 文件
           files: |
