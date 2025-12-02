@@ -299,7 +299,7 @@ jobs:
           
   publish_docker:
     runs-on: ubuntu-latest
-    # 依赖于所有构建（包括 Magisk）
+    # 依赖所有构建和 Magisk 作业
     needs: 
       - build
       - magisk_build 
@@ -313,7 +313,7 @@ jobs:
       fail-fast: false
       matrix:
         platform:
-          # 只构建 AMD64 (x86_64) 和 ARM64 (aarch64)
+          # 仅构建 AMD64 (x86_64) 和 ARM64 (aarch64)
           - ARCH: x86_64
             ARTIFACT_SUFFIX: linux-x86_64
             BASE_IMAGE_ARCH: linux/amd64
@@ -336,7 +336,7 @@ jobs:
       - name: Download Artifact for ${{ matrix.ARCH }}
         uses: actions/download-artifact@v4
         with:
-          name: easytier-${{ matrix.ARTIFACT_SUFFIX }}
+          name: easytier-${{ matrix.ARTIFACT_SUFFIX }} # 修正：确保名称匹配
           path: ./docker_build_context/
 
       # 3. 设置 Buildx
