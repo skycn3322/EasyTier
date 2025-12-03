@@ -79,15 +79,37 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # 所有编译目标
           - TARGET: aarch64-unknown-linux-musl
             OS: ubuntu-22.04
             ARTIFACT_NAME: linux-aarch64
           - TARGET: x86_64-unknown-linux-musl
             OS: ubuntu-22.04
             ARTIFACT_NAME: linux-x86_64
+          - TARGET: riscv64gc-unknown-linux-musl
+            OS: ubuntu-22.04
+            ARTIFACT_NAME: linux-riscv64
+          - TARGET: mips-unknown-linux-musl
+            OS: ubuntu-22.04
+            ARTIFACT_NAME: linux-mips
+          - TARGET: mipsel-unknown-linux-musl
+            OS: ubuntu-22.04
+            ARTIFACT_NAME: linux-mipsel
+          - TARGET: armv7-unknown-linux-musleabihf
+            OS: ubuntu-22.04
+            ARTIFACT_NAME: linux-armv7hf
+          - TARGET: armv7-unknown-linux-musleabi
+            OS: ubuntu-22.04
+            ARTIFACT_NAME: linux-armv7
+          - TARGET: arm-unknown-linux-musleabihf
+            OS: ubuntu-22.04
+            ARTIFACT_NAME: linux-armhf
           - TARGET: arm-unknown-linux-musleabi
             OS: ubuntu-22.04
             ARTIFACT_NAME: linux-arm
+          - TARGET: loongarch64-unknown-linux-musl
+            OS: ubuntu-24.04
+            ARTIFACT_NAME: linux-loongarch64
           - TARGET: x86_64-apple-darwin
             OS: macos-latest
             ARTIFACT_NAME: macos-x86_64
@@ -103,7 +125,10 @@ jobs:
           - TARGET: i686-pc-windows-msvc
             OS: windows-latest
             ARTIFACT_NAME: windows-i686
-
+          - TARGET: x86_64-unknown-freebsd
+            OS: ubuntu-22.04
+            ARTIFACT_NAME: freebsd-13.2-x86_64
+            BSD_VERSION: 13.2
 
     runs-on: ${{ matrix.OS }}
     env:
@@ -273,94 +298,12 @@ jobs:
             !./easytier-contrib/easytier-magisk/magisk_update.json
           if-no-files-found: error
           
-  # --------------------------------------------------
-  # 作业顺序修正：Docker 构建和 Release 发布作为最后的步骤
-  # --------------------------------------------------
-
-  publish_docker:
-    runs-on: ubuntu-latest
-    # 依赖于核心构建成功
-    needs: 
-      - build
-      - magisk_build 
-    if: (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') && needs.build.result == 'success'
-    env:
-      DOCKER_IMAGE_NAME: your_dockerhub_username/easy-tier-core # <-- **请修改为你自己的 Docker Hub 用户名**
-      RELEASE_MODE: ${{ github.event.inputs.release_type || 'nightly' }}
-      TAG_NAME: easytier-${{ github.event.inputs.release_type == 'release' && format('v{0}', github.run_id) || format('nightly-{0}', github.run_id) }}
-    
-    strategy:
-      fail-fast: false
-      matrix:
-        platform:
-          # 只构建 AMD64 (x86_64) 和 ARM64 (aarch64)
-          - ARCH: x86_64
-            ARTIFACT_SUFFIX: linux-x86_64
-            BASE_IMAGE_ARCH: linux/amd64
-          - ARCH: aarch64
-            ARTIFACT_SUFFIX: linux-aarch64
-            BASE_IMAGE_ARCH: linux/arm64
-            
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-        
-      # 1. 登录 Docker Hub
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      # 2. 下载特定架构的 Artifact (修复了下载名称错误)
-      - name: Download Artifact for ${{ matrix.ARCH }}
-        uses: actions/download-artifact@v4
-        with:
-          name: easytier-${{ matrix.ARTIFACT_SUFFIX }}
-          path: ./docker_build_context/
-
-      # 3. 设置 Buildx
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      # 4. 构建并推送镜像
-      - name: Build and Push Docker Image for ${{ matrix.ARCH }}
-        run: |
-          # 复制二进制文件到构建上下文
-          cp ./docker_build_context/easytier-core ./docker_build_context/
-          cp ./docker_build_context/easytier-cli ./docker_build_context/
-          
-          VERSION_TAG=${{ env.DOCKER_IMAGE_NAME }}:${{ env.TAG_NAME }}-${{ matrix.ARCH }}
-          LATEST_TAG=${{ env.DOCKER_IMAGE_NAME }}:latest-${{ matrix.ARCH }}
-          
-          # 使用 buildx 构建并推送到版本 Tag
-          docker buildx build \
-            --platform ${{ matrix.BASE_IMAGE_ARCH }} \
-            --build-arg RELEASE_TAG=${{ env.TAG_NAME }} \
-            -t $VERSION_TAG \
-            -f Dockerfile \
-            --push \
-            ./docker_build_context 
-          
-          # 如果是 nightly 模式，也推送到 latest 标签 (针对当前架构)
-          if [[ "${{ env.RELEASE_MODE }}" == "nightly" ]]; then
-              docker buildx build \
-                --platform ${{ matrix.BASE_IMAGE_ARCH }} \
-                --build-arg RELEASE_TAG=${{ env.TAG_NAME }} \
-                -t $LATEST_TAG \
-                -f Dockerfile \
-                --push \
-                ./docker_build_context 
-          fi
-          
   create_release:
     runs-on: ubuntu-latest
-    # 依赖所有构建和 Docker 发布成功
     needs: 
       - build
       - magisk_build
-      - publish_docker 
-    # 仅在 workflow_dispatch 或 schedule 触发，并且所有前期步骤成功时运行
+    # 仅在 workflow_dispatch 或 schedule 触发，并且所有构建作业成功时运行
     if: (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') && needs.build.result == 'success'
     env:
       RELEASE_MODE: ${{ github.event.inputs.release_type || 'nightly' }}
@@ -384,7 +327,7 @@ jobs:
             This build was triggered automatically by ${{ github.event_name }}.
             Mode: ${{ env.RELEASE_MODE }}
             
-            All supported platform binaries, Magisk module, and Docker images (AMD64/ARM64) are attached below.
+            All supported platform binaries and the Magisk module are attached below.
           draft: ${{ env.RELEASE_MODE != 'release' }}
           prerelease: ${{ env.RELEASE_MODE == 'nightly' }}
           
