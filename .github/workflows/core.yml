@@ -79,37 +79,16 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # 所有编译目标
+          # 所有编译目标 (包括 macOS 和 Windows/FreeBSD)
           - TARGET: aarch64-unknown-linux-musl
             OS: ubuntu-22.04
             ARTIFACT_NAME: linux-aarch64
           - TARGET: x86_64-unknown-linux-musl
             OS: ubuntu-22.04
             ARTIFACT_NAME: linux-x86_64
-          - TARGET: riscv64gc-unknown-linux-musl
-            OS: ubuntu-22.04
-            ARTIFACT_NAME: linux-riscv64
-          - TARGET: mips-unknown-linux-musl
-            OS: ubuntu-22.04
-            ARTIFACT_NAME: linux-mips
-          - TARGET: mipsel-unknown-linux-musl
-            OS: ubuntu-22.04
-            ARTIFACT_NAME: linux-mipsel
-          - TARGET: armv7-unknown-linux-musleabihf
-            OS: ubuntu-22.04
-            ARTIFACT_NAME: linux-armv7hf
-          - TARGET: armv7-unknown-linux-musleabi
-            OS: ubuntu-22.04
-            ARTIFACT_NAME: linux-armv7
-          - TARGET: arm-unknown-linux-musleabihf
-            OS: ubuntu-22.04
-            ARTIFACT_NAME: linux-armhf
           - TARGET: arm-unknown-linux-musleabi
             OS: ubuntu-22.04
             ARTIFACT_NAME: linux-arm
-          - TARGET: loongarch64-unknown-linux-musl
-            OS: ubuntu-24.04
-            ARTIFACT_NAME: linux-loongarch64
           - TARGET: x86_64-apple-darwin
             OS: macos-latest
             ARTIFACT_NAME: macos-x86_64
@@ -122,13 +101,6 @@ jobs:
           - TARGET: aarch64-pc-windows-msvc
             OS: windows-latest
             ARTIFACT_NAME: windows-arm64
-          - TARGET: i686-pc-windows-msvc
-            OS: windows-latest
-            ARTIFACT_NAME: windows-i686
-          - TARGET: x86_64-unknown-freebsd
-            OS: ubuntu-22.04
-            ARTIFACT_NAME: freebsd-13.2-x86_64
-            BSD_VERSION: 13.2
 
     runs-on: ${{ matrix.OS }}
     env:
@@ -300,17 +272,17 @@ jobs:
           
   create_release:
     runs-on: ubuntu-latest
+    # 依赖所有构建和 Magisk 准备工作成功
     needs: 
       - build
       - magisk_build
-    # 仅在 workflow_dispatch 或 schedule 触发，并且所有构建作业成功时运行
     if: (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') && needs.build.result == 'success'
     env:
       RELEASE_MODE: ${{ github.event.inputs.release_type || 'nightly' }}
       RELEASE_NAME: ${{ github.event.inputs.release_type == 'release' && format('v{0}', github.run_id) || format('nightly-{0}', github.run_id) }}
 
     steps:
-      # 1. 下载所有构建的 Artifacts
+      # 1. 下载所有构建的 Artifact (这些 Artifact 就是打包好的 Zip 文件)
       - name: Download All Artifacts
         uses: actions/download-artifact@v4
         with:
@@ -327,10 +299,11 @@ jobs:
             This build was triggered automatically by ${{ github.event_name }}.
             Mode: ${{ env.RELEASE_MODE }}
             
-            All supported platform binaries and the Magisk module are attached below.
+            All platform artifacts and the Magisk module are attached below.
           draft: ${{ env.RELEASE_MODE != 'release' }}
           prerelease: ${{ env.RELEASE_MODE == 'nightly' }}
           
+          # 附加所有下载的 Artifact Zip 包作为 Release Asset
           files: |
-            ./release_assets/*/*
+            ./release_assets/easytier-* # 匹配所有 easytier-* Artifact (它们是 Zip 包)
             ./release_assets/Easytier-Magisk/**/*
