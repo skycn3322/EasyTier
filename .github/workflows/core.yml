@@ -79,7 +79,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # 所有编译目标 (包括 macOS 和 Windows/FreeBSD)
+          # 所有编译目标
           - TARGET: aarch64-unknown-linux-musl
             OS: ubuntu-22.04
             ARTIFACT_NAME: linux-aarch64
@@ -282,7 +282,7 @@ jobs:
       RELEASE_NAME: ${{ github.event.inputs.release_type == 'release' && format('v{0}', github.run_id) || format('nightly-{0}', github.run_id) }}
 
     steps:
-      # 1. 下载所有构建的 Artifact (这些 Artifact 就是打包好的 Zip 文件)
+      # 1. 下载所有构建的 Artifact (这些 Artifact 是 Zip 包)
       - name: Download All Artifacts
         uses: actions/download-artifact@v4
         with:
@@ -305,5 +305,5 @@ jobs:
           
           # 附加所有下载的 Artifact Zip 包作为 Release Asset
           files: |
-            ./release_assets/easytier-* # 匹配所有 easytier-* Artifact (它们是 Zip 包)
+            ./release_assets/easytier-* # 匹配所有 easytier-* Artifact Zip 包
             ./release_assets/Easytier-Magisk/**/*
