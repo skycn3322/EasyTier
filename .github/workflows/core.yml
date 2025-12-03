@@ -297,9 +297,13 @@ jobs:
             !./easytier-contrib/easytier-magisk/magisk_update.json
           if-no-files-found: error
           
+  # --------------------------------------------------
+  # 作业顺序修正：Docker 构建和 Release 发布作为最后的步骤
+  # --------------------------------------------------
+
   publish_docker:
     runs-on: ubuntu-latest
-    # 依赖所有构建和 Magisk 作业
+    # 依赖于核心构建成功
     needs: 
       - build
       - magisk_build 
@@ -313,7 +317,7 @@ jobs:
       fail-fast: false
       matrix:
         platform:
-          # 仅构建 AMD64 (x86_64) 和 ARM64 (aarch64)
+          # 只构建 AMD64 (x86_64) 和 ARM64 (aarch64)
           - ARCH: x86_64
             ARTIFACT_SUFFIX: linux-x86_64
             BASE_IMAGE_ARCH: linux/amd64
@@ -332,18 +336,18 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # 2. 下载特定架构的 Artifact
+      # 2. 下载特定架构的 Artifact (修复了下载名称错误)
       - name: Download Artifact for ${{ matrix.ARCH }}
         uses: actions/download-artifact@v4
         with:
-          name: easytier-${{ matrix.ARTIFACT_SUFFIX }} # 修正：确保名称匹配
+          name: easytier-${{ matrix.ARTIFACT_SUFFIX }}
           path: ./docker_build_context/
 
       # 3. 设置 Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # 4. 构建并推送镜像 (版本 Tag 和 latest Tag)
+      # 4. 构建并推送镜像
       - name: Build and Push Docker Image for ${{ matrix.ARCH }}
         run: |
           # 复制二进制文件到构建上下文
@@ -351,7 +355,7 @@ jobs:
           cp ./docker_build_context/easytier-cli ./docker_build_context/
           
           VERSION_TAG=${{ env.DOCKER_IMAGE_NAME }}:${{ env.TAG_NAME }}-${{ matrix.ARCH }}
-          LATEST_TAG=${{ env.DOCKER_IMAGE_NAME }}:latest-${{ matrix.ARCH }} # 架构特定的 latest
+          LATEST_TAG=${{ env.DOCKER_IMAGE_NAME }}:latest-${{ matrix.ARCH }}
           
           # 使用 buildx 构建并推送到版本 Tag
           docker buildx build \
@@ -375,11 +379,12 @@ jobs:
           
   create_release:
     runs-on: ubuntu-latest
+    # 依赖所有构建和 Docker 发布成功
     needs: 
       - build
       - magisk_build
-      - publish_docker # 确保 Docker 发布成功
-    # 仅在 workflow_dispatch 或 schedule 触发，并且构建成功时运行
+      - publish_docker 
+    # 仅在 workflow_dispatch 或 schedule 触发，并且所有前期步骤成功时运行
     if: (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') && needs.build.result == 'success'
     env:
       RELEASE_MODE: ${{ github.event.inputs.release_type || 'nightly' }}
