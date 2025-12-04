@@ -21,7 +21,7 @@ pub static malloc_conf: &[u8] = b"prof:true,prof_active:true,lg_prof_sample:19,r
 #[export_name = "malloc_conf"]
 pub static malloc_conf: &[u8] = b"retain:false\0";
 
-rust_i18n::i18n!("locales", fallback = "en");
+rust_i18n::i18n!("locales", fallback = "cn");
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> std::process::ExitCode {

@@ -32,7 +32,7 @@ mod web;
 #[global_allocator]
 static GLOBAL_MIMALLOC: MiMalloc = MiMalloc;
 
-rust_i18n::i18n!("locales", fallback = "en");
+rust_i18n::i18n!("locales", fallback = "cn");
 
 #[derive(Parser, Debug)]
 #[command(name = "easytier-web", author, version = EASYTIER_VERSION , about, long_about = None)]
