@@ -281,7 +281,7 @@ jobs:
       RELEASE_MODE: ${{ github.event.inputs.release_type || 'nightly' }}
       RELEASE_NAME: ${{ github.event.inputs.release_type == 'release' && format('v{0}', github.run_id) || format('nightly-{0}', github.run_id) }}
 
-steps:
+    steps:
   # 1. 下载所有构建的 Artifact (这些 Artifact 是 Zip 包)
   - name: Download All Artifacts
     uses: actions/download-artifact@v4
