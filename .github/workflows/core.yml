@@ -281,29 +281,31 @@ jobs:
       RELEASE_MODE: ${{ github.event.inputs.release_type || 'nightly' }}
       RELEASE_NAME: ${{ github.event.inputs.release_type == 'release' && format('v{0}', github.run_id) || format('nightly-{0}', github.run_id) }}
 
-    steps:
-      # 1. 下载所有构建的 Artifact (这些 Artifact 是 Zip 包)
-      - name: Download All Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: ./release_assets/
+steps:
+  # 1. 下载所有构建的 Artifact (这些 Artifact 是 Zip 包)
+  - name: Download All Artifacts
+    uses: actions/download-artifact@v4
+    with:
+      path: ./release_assets/
 
-      # 2. 创建 GitHub Release
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
-        with:
-          token: ${{ secrets.GH_RELEASE_PAT }} # 使用自定义 PAT 解决 403 错误
-          tag_name: easytier-${{ env.RELEASE_NAME }}
-          name: EasyTier ${{ env.RELEASE_NAME }}
-          body: |
-            This build was triggered automatically by ${{ github.event_name }}.
-            Mode: ${{ env.RELEASE_MODE }}
-            
-            All platform artifacts and the Magisk module are attached below.
-          draft: ${{ env.RELEASE_MODE != 'release' }}
-          prerelease: ${{ env.RELEASE_MODE == 'nightly' }}
-          
-          # 附加所有下载的 Artifact Zip 包作为 Release Asset
-          files: |
-            ./release_assets/easytier-* # 匹配所有 easytier-* Artifact Zip 包
-            ./release_assets/Easytier-Magisk/**/*
+  # 2. 列出下载的文件，确认路径
+  - name: List downloaded artifacts
+    run: ls -R ./release_assets/
+
+  # 3. 创建 GitHub Release 并上传 ZIP 文件
+  - name: Create GitHub Release
+    uses: softprops/action-gh-release@v1
+    with:
+      token: ${{ secrets.GH_RELEASE_PAT }} # 使用自定义 PAT 解决 403 错误
+      tag_name: easytier-${{ env.RELEASE_NAME }}
+      name: EasyTier ${{ env.RELEASE_NAME }}
+      body: |
+        This build was triggered automatically by ${{ github.event_name }}.
+        Mode: ${{ env.RELEASE_MODE }}
+
+        All platform artifacts and the Magisk module are attached below.
+      draft: ${{ env.RELEASE_MODE != 'release' }}
+      prerelease: ${{ env.RELEASE_MODE == 'nightly' }}
+      files: |
+        ./release_assets/easytier-*.zip
+        ./release_assets/Easytier-Magisk/*.zip
