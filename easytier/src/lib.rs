@@ -28,7 +28,7 @@ pub mod web_client;
 mod tests;
 
 pub const VERSION: &str = common::constants::EASYTIER_VERSION;
-rust_i18n::i18n!("locales", fallback = "en");
+rust_i18n::i18n!("locales", fallback = "cn");
 
 pub fn print_completions<G: Generator>(generator: G, cmd: &mut Command, bin_name: &str) {
     clap_complete::generate(generator, cmd, bin_name, &mut io::stdout());

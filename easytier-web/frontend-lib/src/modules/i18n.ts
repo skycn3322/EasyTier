@@ -8,8 +8,8 @@ import CnLocale from '../locales/cn.yaml'
 // https://vitejs.dev/guide/features.html#glob-import
 export const i18n = createI18n({
   legacy: false,
-  locale: '',
-  fallbackLocale: '',
+  locale: 'cn',
+  fallbackLocale: 'en',
   messages: {},
 })
 
@@ -23,13 +23,13 @@ export const availableLocales = Object.keys(localesMap)
 const loadedLanguages: string[] = []
 
 export function toggleLanguage() {
-  const currentLang = localStorage.getItem('lang') || 'en'
-  const newLang = currentLang === 'en' ? 'cn' : 'en'
+  const currentLang = localStorage.getItem('lang') || 'cn'
+  const newLang = currentLang === 'cn' ? 'en' : 'cn'
   loadLanguageAsync(newLang)
 }
 
 export function getCurrentLanguage() {
-  return localStorage.getItem('lang') || 'en'
+  return localStorage.getItem('lang') || 'cn'
 }
 
 function setI18nLanguage(lang: Locale) {

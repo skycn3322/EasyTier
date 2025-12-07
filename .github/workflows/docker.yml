@@ -55,7 +55,7 @@ jobs:
         with:
           registry: ghcr.io
           username: skycn3322
-          password: ${{ secrets.GHCR_PAT }}   # 这里用 PAT，必须有 write:packages 权限
+          password: ${{ secrets.GHCR_PAT }}
 
       - name: Download artifact
         id: download-artifact
