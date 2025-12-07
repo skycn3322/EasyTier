@@ -50,12 +50,12 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Login to GitHub Container Registry
+      - name: Login to GitHub Container Registry (personal namespace)
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          username: skycn3322
-          password: ${{ secrets.GHCR_PAT }}   # 用 PAT，必须有 write:packages 权限
+          username: ${{ github.actor }}          # 当前执行者（你的个人账号）
+          password: ${{ secrets.GITHUB_TOKEN }}  # 默认 GITHUB_TOKEN 即可
 
       - name: Download artifact
         id: download-artifact
@@ -73,16 +73,16 @@ jobs:
         id: tags
         run: |
           DOCKERHUB_TAGS="jellyfina/easytier:${{ inputs.image_tag }}"
-          GHCR_TAGS="ghcr.io/skycn3322/easytier:${{ inputs.image_tag }}"
+          GHCR_TAGS="ghcr.io/${{ github.actor }}/easytier:${{ inputs.image_tag }}"
 
           if [[ "${{ inputs.mark_latest }}" == "true" ]]; then
             DOCKERHUB_TAGS="${DOCKERHUB_TAGS},jellyfina/easytier:latest"
-            GHCR_TAGS="${GHCR_TAGS},ghcr.io/skycn3322/easytier:latest"
+            GHCR_TAGS="${GHCR_TAGS},ghcr.io/${{ github.actor }}/easytier:latest"
           fi
 
           if [[ "${{ inputs.mark_unstable }}" == "true" ]]; then
             DOCKERHUB_TAGS="${DOCKERHUB_TAGS},jellyfina/easytier:unstable"
-            GHCR_TAGS="${GHCR_TAGS},ghcr.io/skycn3322/easytier:unstable"
+            GHCR_TAGS="${GHCR_TAGS},ghcr.io/${{ github.actor }}/easytier:unstable"
           fi
 
           ALL_TAGS="${DOCKERHUB_TAGS},${GHCR_TAGS}"
