@@ -51,6 +51,7 @@ jobs:
           push: true
           file: .github/workflows/Dockerfile
           # 这里直接写死 tag，不再依赖 inputs
+          run_id: 20001660503
           tags: |
             easytier/easytier:v2.4.5
             easytier/easytier:latest
