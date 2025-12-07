@@ -71,19 +71,19 @@ jobs:
         id: tags
         run: |
           # Base tags with version
-          DOCKERHUB_TAGS="easytier/easytier:${{ inputs.image_tag }}"
-          GHCR_TAGS="ghcr.io/easytier/easytier:${{ inputs.image_tag }}"
+          DOCKERHUB_TAGS="jellyfina/easytier:${{ inputs.image_tag }}"
+          GHCR_TAGS="ghcr.io/skycn3322/easytier:${{ inputs.image_tag }}"
 
           # Add latest tags if requested
           if [[ "${{ inputs.mark_latest }}" == "true" ]]; then
-            DOCKERHUB_TAGS="${DOCKERHUB_TAGS},easytier/easytier:latest"
-            GHCR_TAGS="${GHCR_TAGS},ghcr.io/easytier/easytier:latest"
+            DOCKERHUB_TAGS="${DOCKERHUB_TAGS},jellyfina/easytier:latest"
+            GHCR_TAGS="${GHCR_TAGS},ghcr.io/skycn3322/easytier:latest"
           fi
 
           # Add unstable tags if requested
           if [[ "${{ inputs.mark_unstable }}" == "true" ]]; then
-            DOCKERHUB_TAGS="${DOCKERHUB_TAGS},easytier/easytier:unstable"
-            GHCR_TAGS="${GHCR_TAGS},ghcr.io/easytier/easytier:unstable"
+            DOCKERHUB_TAGS="${DOCKERHUB_TAGS},jellyfina/easytier:unstable"
+            GHCR_TAGS="${GHCR_TAGS},ghcr.io/skycn3322/easytier:unstable"
           fi
 
           # Combine all tags
@@ -96,7 +96,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ./docker_context
-          platforms: linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64,linux/riscv64
+          platforms: linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64
           push: true
           file: .github/workflows/Dockerfile
           tags: ${{ steps.tags.outputs.tags }}
