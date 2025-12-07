@@ -73,16 +73,16 @@ jobs:
         id: tags
         run: |
           DOCKERHUB_TAGS="jellyfina/easytier:${{ inputs.image_tag }}"
-          GHCR_TAGS="ghcr.io/${{ github.actor }}/easytier:${{ inputs.image_tag }}"
+          GHCR_TAGS="ghcr.io/${{ github.repository_owner }}/easytier:${{ inputs.image_tag }}"
 
           if [[ "${{ inputs.mark_latest }}" == "true" ]]; then
             DOCKERHUB_TAGS="${DOCKERHUB_TAGS},jellyfina/easytier:latest"
-            GHCR_TAGS="${GHCR_TAGS},ghcr.io/${{ github.actor }}/easytier:latest"
+            GHCR_TAGS="${GHCR_TAGS},ghcr.io/${{ github.repository_owner }}/easytier:latest"
           fi
 
           if [[ "${{ inputs.mark_unstable }}" == "true" ]]; then
             DOCKERHUB_TAGS="${DOCKERHUB_TAGS},jellyfina/easytier:unstable"
-            GHCR_TAGS="${GHCR_TAGS},ghcr.io/${{ github.actor }}/easytier:unstable"
+            GHCR_TAGS="${GHCR_TAGS},ghcr.io/${{ github.repository_owner }}/easytier:unstable"
           fi
 
           ALL_TAGS="${DOCKERHUB_TAGS},${GHCR_TAGS}"
