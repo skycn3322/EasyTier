@@ -1,7 +1,7 @@
 name: EasyTier Docker
 
 on:
-  workflow_dispatch:  # 保留手动触发，但不再定义 inputs
+  workflow_dispatch:  # 手动触发，无需输入参数
 
 jobs:
   docker:
@@ -29,29 +29,13 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Download artifact
-        id: download-artifact
-        uses: dawidd6/action-download-artifact@v11
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          # run_id 固定写死或直接去掉，看你是否还需要下载 EasyTier-Core 的产物
-          run_id: 20001660503
-          repo: EasyTier/EasyTier
-          path: docker_context
-
-      - name: List files
-        run: |
-          ls -l -R .
-
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          context: ./docker_context
+          context: .   # 直接用当前仓库作为构建上下文
           platforms: linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64,linux/riscv64
           push: true
           file: .github/workflows/Dockerfile
-          # 这里直接写死 tag，不再依赖 inputs
-          
           tags: |
             easytier/easytier:v2.4.5
             easytier/easytier:latest
