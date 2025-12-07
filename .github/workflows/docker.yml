@@ -54,8 +54,8 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}          # 当前执行者（你的个人账号）
-          password: ${{ secrets.GITHUB_TOKEN }}  # 默认 GITHUB_TOKEN 即可
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download artifact
         id: download-artifact
