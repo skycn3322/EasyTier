@@ -6,7 +6,7 @@ on:
       run_id:
         description: 'The run id of EasyTier-Core Action in EasyTier repo'
         type: number
-        default: 10228239965
+        default: 20001660503
         required: true
       image_tag:
         description: 'Tag for this image build'
