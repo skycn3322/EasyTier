@@ -35,7 +35,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           # run_id 固定写死或直接去掉，看你是否还需要下载 EasyTier-Core 的产物
-          run_id: 10228239965
+
           repo: EasyTier/EasyTier
           path: docker_context
 
