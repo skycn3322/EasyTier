@@ -111,7 +111,7 @@ onUnmounted(() => {
                         <Button ref="toggleButtonRef" type="button" aria-haspopup="true" icon="pi pi-list"
                             variant="text" size="large" severity="contrast" @click="toggleSidebar" />
                     </div>
-                    <a href="https://blog.rebelecho.vip" class="flex ms-2 md:me-24">
+                    <a href="https://blog.rebelecho.vip" class="flex ms-2 md:me-24" target="_blank" rel="noopener noreferrer">
                         <img :src="Icon" class="h-9 me-3" alt="FlowBite Logo" />
                         <span
                             class="self-center text-xl font-semibold sm:text-2xl whitespace-nowrap dark:text-white">瞎折腾</span>
