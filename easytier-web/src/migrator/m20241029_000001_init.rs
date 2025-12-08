@@ -1,5 +1,3 @@
-// src/migrator/m20220602_000001_create_bakery_table.rs (create new file)
-
 use sea_orm_migration::{prelude::*, schema::*};
 
 pub struct Migration;
@@ -63,7 +61,6 @@ enum UserRunningNetworkConfigs {
 
 #[async_trait::async_trait]
 impl MigrationTrait for Migration {
-    // Define how to apply this migration: Create the Bakery table.
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         // Create the `users` table.
         manager
@@ -178,7 +175,7 @@ impl MigrationTrait for Migration {
             )
             .await?;
 
-        // create user running network configs table
+        // Create the `user_running_network_configs` table.
         manager
             .create_table(
                 Table::create()
@@ -214,37 +211,8 @@ impl MigrationTrait for Migration {
                     .to_owned(),
             )
             .await?;
-        manager
-            .create_index(
-                Index::create()
-                    .name("idx_user_running_network_configs_user_id")
-                    .table(UserRunningNetworkConfigs::Table)
-                    .col(UserRunningNetworkConfigs::UserId)
-                    .to_owned(),
-            )
-            .await?;
 
-        // prepare data
-        let user = Query::insert()
-            .into_table(Users::Table)
-            .columns(vec![Users::Username, Users::Password])
-            .values_panic(vec![
-                "user".into(),
-                "$argon2i$v=19$m=16,t=2,p=1$aGVyRDBrcnRycnlaMDhkbw$449SEcv/qXf+0fnI9+fYVQ".into(), // user (md5summed)
-            ])
-            .to_owned();
-        manager.exec_stmt(user).await?;
-
-        let admin = Query::insert()
-            .into_table(Users::Table)
-            .columns(vec![Users::Username, Users::Password])
-            .values_panic(vec![
-                "admin".into(),
-                "$argon2i$v=19$m=16,t=2,p=1$bW5idXl0cmY$61n+JxL4r3dwLPAEDlDdtg".into(), // admin (md5summed)
-            ])
-            .to_owned();
-        manager.exec_stmt(admin).await?;
-
+        // 保留组和权限插入
         let users = Query::insert()
             .into_table(Groups::Table)
             .columns(vec![Groups::Name])
@@ -299,66 +267,16 @@ impl MigrationTrait for Migration {
             .to_owned();
         manager.exec_stmt(users_devices).await?;
 
-        let add_user_to_users = Query::insert()
-            .into_table(UsersGroups::Table)
-            .columns(vec![UsersGroups::UserId, UsersGroups::GroupId])
-            .select_from(
-                Query::select()
-                    .column((Users::Table, Users::Id))
-                    .column((Groups::Table, Groups::Id))
-                    .from(Users::Table)
-                    .full_outer_join(Groups::Table, all![])
-                    .cond_where(
-                        Expr::col(Users::Username)
-                            .eq("user")
-                            .and(Expr::col(Groups::Name).eq("users")),
-                    )
-                    .to_owned(),
-            )
-            .unwrap()
-            .to_owned();
-        manager.exec_stmt(add_user_to_users).await?;
-
-        let add_admin_to_admins = Query::insert()
-            .into_table(UsersGroups::Table)
-            .columns(vec![UsersGroups::UserId, UsersGroups::GroupId])
-            .select_from(
-                Query::select()
-                    .column((Users::Table, Users::Id))
-                    .column((Groups::Table, Groups::Id))
-                    .from(Users::Table)
-                    .full_outer_join(Groups::Table, all![])
-                    .cond_where(
-                        Expr::col(Users::Username)
-                            .eq("admin")
-                            .and(Expr::col(Groups::Name).eq("admins")),
-                    )
-                    .to_owned(),
-            )
-            .unwrap()
-            .to_owned();
-        manager.exec_stmt(add_admin_to_admins).await?;
-
         Ok(())
     }
 
-    // Define how to rollback this migration: Drop the Bakery table.
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        manager
-            .drop_table(Table::drop().table(Users::Table).to_owned())
-            .await?;
-        manager
-            .drop_table(Table::drop().table(Groups::Table).to_owned())
-            .await?;
-        manager
-            .drop_table(Table::drop().table(Permissions::Table).to_owned())
-            .await?;
-        manager
-            .drop_table(Table::drop().table(UsersGroups::Table).to_owned())
-            .await?;
-        manager
-            .drop_table(Table::drop().table(GroupsPermissions::Table).to_owned())
-            .await?;
+        manager.drop_table(Table::drop().table(Users::Table).to_owned()).await?;
+        manager.drop_table(Table::drop().table(Groups::Table).to_owned()).await?;
+        manager.drop_table(Table::drop().table(Permissions::Table).to_owned()).await?;
+        manager.drop_table(Table::drop().table(UsersGroups::Table).to_owned()).await?;
+        manager.drop_table(Table::drop().table(GroupsPermissions::Table).to_owned()).await?;
+        manager.drop_table(Table::drop().table(UserRunningNetworkConfigs::Table).to_owned()).await?;
         Ok(())
     }
 }
